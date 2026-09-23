@@ -38,7 +38,37 @@ records = source.search(ec="1.2.1", radius=4)
 registry = to_rule_registry(records, tags=("retrorules", "biochemical"))
 ```
 
-A downloaded RetroRules TSV can also be parsed without network access:
+For reproducible bulk acquisition, Chem-Predict uses the official v3.1.0
+download endpoints documented by RetroRules:
+
+```text
+/dl/v3.1.0/metanetx/templates?format=tsv
+/dl/v3.1.0/rhea/templates?format=tsv
+/dl/v3.1.0/uspto/templates?format=tsv
+```
+
+The server returns gzip-compressed archives.
+
+```python
+from chem_predict.rulesources import RetroRulesSource
+
+source = RetroRulesSource()
+
+source.download_templates(
+    "rhea",
+    "data/raw/retrorules-3.1.0-rhea.tsv.gz",
+)
+
+for record in source.iter_downloaded_tsv(
+    "data/raw/retrorules-3.1.0-rhea.tsv.gz"
+):
+    print(record.id, record.reaction_smarts)
+```
+
+JSON and CSV are also available from upstream, but TSV is the preferred
+streaming format in Chem-Predict.
+
+A downloaded/uncompressed RetroRules TSV can also be parsed without network access:
 
 ```python
 from pathlib import Path
