@@ -48,12 +48,13 @@ LILLY_NATIVE_RULES: tuple[MedchemRule, ...] = (
     MedchemRule(
         id="lilly_ester",
         name="Ester",
-        smarts="[OD1]=[CD3R0T2]-[OD2]",
+        smarts="[O;D1]=[C;D3;R0]-[O;D2;!$([O]-c)]",
         severity=MedchemSeverity.DEMERIT,
         demerit=35,
         source_rule="queries/ester.qry",
         source_version=LILLY_RULESET_VERSION,
-        port_status="direct_smarts_port",
+        port_status="rdkit_translation",
+        notes="Translated from LillyMol query syntax; excludes aryl esters via the upstream Environment_no_Match condition.",
     ),
     MedchemRule(
         id="lilly_nitro",
