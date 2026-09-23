@@ -1,4 +1,5 @@
-from chem_predict.rulesources.convert import to_core_rule, to_rule_registry\nfrom chem_predict.rulesources.chet import CHET_GUIDE_URL, parse_chet_export_csv
+from chem_predict.rulesources.chet import CHET_GUIDE_URL, parse_chet_export_csv
+from chem_predict.rulesources.convert import to_core_rule, to_rule_registry
 from chem_predict.rulesources.external import EnviPathSource
 from chem_predict.rulesources.models import (
     AccessMode,
@@ -10,13 +11,13 @@ from chem_predict.rulesources.models import (
 )
 from chem_predict.rulesources.registry import SOURCES, get_source, list_sources
 from chem_predict.rulesources.retrorules import (
-    RETRO_RULES_VERSION,
     RETRO_RULES_DATASETS,
     RETRO_RULES_FORMATS,
+    RETRO_RULES_VERSION,
     RetroRulesSource,
+    iter_templates_tsv_gz,
     parse_template_row,
     parse_templates_tsv,
-    iter_templates_tsv_gz,
 )
 from chem_predict.rulesources.rhea import (
     RHEA_LICENSE_URL,
@@ -35,9 +36,10 @@ __all__ = [
     "CHET_GUIDE_URL",
     "EnviPathSource",
     "NORMAN_REFTPS_CONCEPT_DOI",
-    "RETRO_RULES_VERSION",
+    "NormanRefTPSSource",
     "RETRO_RULES_DATASETS",
     "RETRO_RULES_FORMATS",
+    "RETRO_RULES_VERSION",
     "RHEA_LICENSE_URL",
     "RHEA_REACTION_SMILES_URL",
     "ReactionRecord",
@@ -49,12 +51,13 @@ __all__ = [
     "SourceFetchError",
     "SourceKind",
     "ZenodoRecordSource",
-    "NormanRefTPSSource",
     "get_source",
+    "iter_templates_tsv_gz",
     "list_sources",
     "parse_chet_export_csv",
     "parse_reaction_smiles_lines",
     "parse_template_row",
     "parse_templates_tsv",
-    "iter_templates_tsv_gz",
+    "to_core_rule",
+    "to_rule_registry",
 ]
