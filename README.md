@@ -23,6 +23,7 @@ src/chem_predict/
 ├── chemistry/     # molecule and reaction primitives
 ├── rules/         # rule registry + JSON serialization
 ├── degradation/   # degradation prediction engine
+├── medchem/        # Lilly-style quality/reactivity filters
 ├── properties/    # future property providers
 ├── purge/         # future impurity purge models
 ├── nitrosamines/  # CPCA, precursor/context screening, reactivity evidence
@@ -128,6 +129,36 @@ print(enumerate_secondary_amine_nitrosation_products("CCNCC"))
 
 See `docs/nitrosamines.md` for scope, regulatory-source hierarchy, current
 limitations, and literature provenance.
+
+## Medchem and reaction informatics
+
+```python
+from chem_predict.medchem import LillyNativeRules
+
+assessment = LillyNativeRules().assess("CCN(N=O)CC")
+print(assessment.passed, assessment.total_demerits)
+```
+
+The native Lilly port is incremental and auditable; the package also provides
+an adapter to a local official Lilly-Medchem-Rules/LillyMol installation for
+exact comparison.
+
+SynKit is optional:
+
+```bash
+python -m pip install -e ".[synkit]"
+```
+
+```python
+from chem_predict.integrations import reaction_to_its
+
+result = reaction_to_its(
+    "[CH3:1][Br:2].[OH-:3]>>[CH3:1][OH:3].[Br-:2]"
+)
+print(result.changed_bonds)
+```
+
+See `docs/integrations.md` and `THIRD_PARTY_NOTICES.md`.
 
 ## CLI
 
