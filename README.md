@@ -25,7 +25,7 @@ src/chem_predict/
 ├── degradation/   # degradation prediction engine
 ├── properties/    # future property providers
 ├── purge/         # future impurity purge models
-├── nitrosamines/  # future nitrosamine-specific logic
+├── nitrosamines/  # CPCA, precursor/context screening, reactivity evidence
 └── cli.py          # small command-line interface
 ```
 
@@ -101,6 +101,34 @@ for prediction in predictions:
 
 The example transformation exists only to test the machinery. Scientific degradation rules should be separately curated and referenced.
 
+## Nitrosamine screening
+
+The nitrosamine module keeps potency categorization, formation context, and
+reactivity/purge evidence separate:
+
+```python
+from chem_predict.nitrosamines import (
+    NitrosationContext,
+    assess_cpca,
+    assess_nitrosation_context,
+    enumerate_secondary_amine_nitrosation_products,
+)
+
+cpca = assess_cpca("CCN(N=O)CC")
+print(cpca.overall_category, cpca.overall_ai_ng_per_day)
+
+context = assess_nitrosation_context(
+    "CCNCC",
+    NitrosationContext(nitrite_present=True, ph=3.5),
+)
+print(context.flags)
+
+print(enumerate_secondary_amine_nitrosation_products("CCNCC"))
+```
+
+See `docs/nitrosamines.md` for scope, regulatory-source hierarchy, current
+limitations, and literature provenance.
+
 ## CLI
 
 ```bash
@@ -115,7 +143,7 @@ chem-predict predict examples/rules_demo.json "CC=O" --stress reduction
 2. Multi-reactant handling for API-excipient and nitrosation chemistry.
 3. Pluggable physicochemical-property providers.
 4. Explicit impurity fate/purge model separating reactivity, solubility, volatility, and process operations.
-5. Nitrosamine precursor/formation/persistence module.
+5. Expand nitrosamine formation/persistence models and validate the open CPCA feature catalogue.
 6. Dataset adapters for reaction/degradation corpora without coupling datasets to the core engine.
 7. Scoring/ranking layer kept separate from rule execution.
 8. Provenance and validation reports suitable for reproducible research.
