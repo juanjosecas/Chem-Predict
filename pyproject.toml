@@ -17,6 +17,9 @@ dependencies = [
 dev = [
     "pytest>=9.0",
 ]
+synkit = [
+    "synkit>=1.6.2,<1.7",
+]
 
 [project.scripts]
 chem-predict = "chem_predict.cli:main"
