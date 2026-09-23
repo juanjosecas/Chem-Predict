@@ -1,4 +1,4 @@
-from chem_predict.rulesources.chet import CHET_GUIDE_URL, parse_chet_export_csv
+from chem_predict.rulesources.convert import to_core_rule, to_rule_registry\nfrom chem_predict.rulesources.chet import CHET_GUIDE_URL, parse_chet_export_csv
 from chem_predict.rulesources.external import EnviPathSource
 from chem_predict.rulesources.models import (
     AccessMode,
