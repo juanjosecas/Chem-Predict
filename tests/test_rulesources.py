@@ -38,6 +38,9 @@ def test_retrorules_uses_documented_api_shapes() -> None:
     assert source.template_summary_url("RR:03-TEST").endswith(
         "/api/templates/RR%3A03-TEST/summary"
     )
+    assert source.bulk_download_url("rhea", format="tsv") == (
+        "https://retrorules.org/dl/v3.1.0/rhea/templates?format=tsv"
+    )
 
 
 def test_rhea_headerless_parser_finds_id_and_reaction_smiles() -> None:
