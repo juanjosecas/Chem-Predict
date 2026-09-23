@@ -11,9 +11,12 @@ from chem_predict.rulesources.models import (
 from chem_predict.rulesources.registry import SOURCES, get_source, list_sources
 from chem_predict.rulesources.retrorules import (
     RETRO_RULES_VERSION,
+    RETRO_RULES_DATASETS,
+    RETRO_RULES_FORMATS,
     RetroRulesSource,
     parse_template_row,
     parse_templates_tsv,
+    iter_templates_tsv_gz,
 )
 from chem_predict.rulesources.rhea import (
     RHEA_LICENSE_URL,
@@ -33,6 +36,8 @@ __all__ = [
     "EnviPathSource",
     "NORMAN_REFTPS_CONCEPT_DOI",
     "RETRO_RULES_VERSION",
+    "RETRO_RULES_DATASETS",
+    "RETRO_RULES_FORMATS",
     "RHEA_LICENSE_URL",
     "RHEA_REACTION_SMILES_URL",
     "ReactionRecord",
@@ -51,4 +56,5 @@ __all__ = [
     "parse_reaction_smiles_lines",
     "parse_template_row",
     "parse_templates_tsv",
+    "iter_templates_tsv_gz",
 ]
