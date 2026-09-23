@@ -109,39 +109,42 @@ def _payload_rows(payload: Any) -> list[dict[str, Any]]:
 
 
 class RetroRulesSource:
-    """Primary-source adapter for the RetroRules template API."""
+    """Primary-source adapter for the documented RetroRules template API."""
 
     def build_search_url(
         self,
         *,
         ec: str | None = None,
-        reaction_id: str | None = None,
-        template_id: str | None = None,
         radius: int | None = None,
-        smarts: str | None = None,
-        limit: int | None = None,
     ) -> str:
         params: dict[str, str | int] = {}
         if ec:
             params["ec"] = ec
-        if reaction_id:
-            params["reaction_id"] = reaction_id
-        if template_id:
-            params["template_id"] = template_id
         if radius is not None:
             if not 0 <= radius <= 10:
                 raise ValueError("RetroRules radius must be between 0 and 10")
             params["radius"] = radius
-        if smarts:
-            params["smarts"] = smarts
-        if limit is not None:
-            if limit < 1:
-                raise ValueError("limit must be >= 1")
-            params["limit"] = limit
 
         query = urlencode(params)
         return TEMPLATES_API if not query else f"{TEMPLATES_API}?{query}"
 
-    def search(self, **filters: Any) -> list[ReactionRuleRecord]:
-        payload = fetch_json(self.build_search_url(**filters))
+    def template_summary_url(self, template_id: str) -> str:
+        if not template_id:
+            raise ValueError("template_id must not be empty")
+        from urllib.parse import quote
+        return f"{TEMPLATES_API}/{quote(template_id, safe='')}/summary"
+
+    def search(
+        self,
+        *,
+        ec: str | None = None,
+        radius: int | None = None,
+    ) -> list[ReactionRuleRecord]:
+        payload = fetch_json(self.build_search_url(ec=ec, radius=radius))
         return [parse_template_row(row) for row in _payload_rows(payload)]
+
+    def summary(self, template_id: str) -> dict[str, Any]:
+        payload = fetch_json(self.template_summary_url(template_id))
+        if not isinstance(payload, dict):
+            raise SourceFetchError("Unexpected RetroRules template summary payload")
+        return payload
