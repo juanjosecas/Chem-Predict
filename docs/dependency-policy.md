@@ -38,3 +38,20 @@ them as generated products.
 
 Whenever an integration is extended, re-check the upstream documentation even
 if the same library already appears in this file.
+
+
+### RDKit visualization
+
+Checked: 2026-09-23
+Documentation release checked: RDKit 2026.03.6
+
+Visualization APIs used:
+
+- `Draw.MolToSVG`
+- `rdMolDraw2D.MolDraw2DSVG`
+- `rdMolDraw2D.MolDraw2DCairo`
+- `MolDraw2D.DrawReaction`
+- `rdChemReactions.ReactionFromSmarts(..., useSmiles=...)`
+
+Reaction-center detection uses stable RDKit atom-map and bond APIs rather than
+depending on undocumented drawing internals.

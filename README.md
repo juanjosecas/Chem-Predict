@@ -24,6 +24,8 @@ src/chem_predict/
 ├── rules/         # rule registry + JSON serialization
 ├── degradation/   # degradation prediction engine
 ├── medchem/        # Lilly-style quality/reactivity filters
+├── rulesources/    # primary-source reaction rules/reaction evidence
+├── visualization/  # molecules, reactions, reaction-center depictions
 ├── properties/    # future property providers
 ├── purge/         # future impurity purge models
 ├── nitrosamines/  # CPCA, precursor/context screening, reactivity evidence
@@ -160,6 +162,57 @@ print(result.changed_bonds)
 
 See `docs/integrations.md` and `THIRD_PARTY_NOTICES.md`.
 
+## Primary reaction-rule sources
+
+Direct reaction rules and primary reaction evidence are deliberately kept
+separate.
+
+```python
+from chem_predict.rulesources import RetroRulesSource, to_rule_registry
+
+source = RetroRulesSource()
+records = source.search(ec="1.2.1", radius=4)
+
+registry = to_rule_registry(records, tags=("retrorules",))
+```
+
+Rhea reactions can be downloaded directly from the official ExPASy export:
+
+```python
+from chem_predict.rulesources import RheaSource
+
+source = RheaSource()
+source.download("data/raw/rhea-reaction-smiles.tsv")
+```
+
+CheT official CSV exports, NORMAN/Zenodo records and explicitly supplied
+enviPath rule URLs also have adapters. ORD and BioTransformer are registered as
+external sources with their licensing constraints rather than being copied into
+the MIT repository.
+
+See `docs/rule-sources.md`.
+
+## Visualization
+
+```python
+from chem_predict.visualization import (
+    draw_reaction_center,
+    molecule_svg,
+    reaction_svg,
+)
+
+mol_svg = molecule_svg("CCO", atom_indices=True)
+
+reaction = "[CH3:1][Br:2].[OH-:3]>>[CH3:1][OH:3].[Br-:2]"
+rxn_svg = reaction_svg(reaction)
+
+center = draw_reaction_center(reaction)
+print(center.changed_bonds)
+```
+
+The reaction-center view highlights changed mapped atoms/bonds independently on
+the reactant and product sides. See `docs/visualization.md`.
+
 ## CLI
 
 ```bash
@@ -175,7 +228,7 @@ chem-predict predict examples/rules_demo.json "CC=O" --stress reduction
 3. Pluggable physicochemical-property providers.
 4. Explicit impurity fate/purge model separating reactivity, solubility, volatility, and process operations.
 5. Expand nitrosamine formation/persistence models and validate the open CPCA feature catalogue.
-6. Dataset adapters for reaction/degradation corpora without coupling datasets to the core engine.
+6. Expand primary-source adapters and derive validated reaction templates from Rhea, CheT, NORMAN and ORD reaction evidence.
 7. Scoring/ranking layer kept separate from rule execution.
 8. Provenance and validation reports suitable for reproducible research.
 
