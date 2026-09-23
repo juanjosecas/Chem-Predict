@@ -235,3 +235,32 @@ chem-predict predict examples/rules_demo.json "CC=O" --stress reduction
 ## License
 
 MIT. See `LICENSE`.
+
+## Mixture and context enumeration
+
+Supply the mixture components explicitly and use the existing condition windows
+on rules. Multi-reactant SMARTS use reactant template order; substrate, excipient,
+and reagent roles are annotations, not evidence of reactivity.
+
+```python
+from chem_predict.core import Conditions, StressType
+from chem_predict.degradation import MixtureComponent, MixtureDegradationEngine
+from chem_predict.rules import RuleRegistry
+
+registry = RuleRegistry.from_json("my_curated_rules.json")
+results = MixtureDegradationEngine(registry).predict(
+    [MixtureComponent("CBr", role="substrate"),
+     MixtureComponent("[OH-]", role="reagent")],
+    Conditions(stresses=frozenset({StressType.BASE}), ph=10.0),
+)
+for result in results:
+    print(result.reactant_indices, result.rule_id, result.products, result.source)
+```
+
+This enumerates **one-step possible products**, without kinetics, yields,
+concentration effects, competing reactions, or calibrated confidence. Rule
+priority only determines output order. No reaction rules are downloaded
+implicitly; use the existing rule-source adapters and curate applicability
+before loading a registry. The combination limit raises on overflow rather
+than silently returning a partial list. Products retain RDKit isomeric SMILES,
+rule source and per-component indices for auditability.
