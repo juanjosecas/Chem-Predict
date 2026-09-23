@@ -1,0 +1,16 @@
+[
+  {
+    "id": "demo_carbonyl_reduction",
+    "name": "Demo carbonyl reduction",
+    "reaction_smarts": "[C:1]=[O:2]>>[C:1][O:2]",
+    "when": {
+      "stresses": ["reduction"]
+    },
+    "priority": 0,
+    "enabled": true,
+    "source": "Demonstration only; not a curated degradation rule",
+    "description": "Mechanical example used to exercise the rule engine.",
+    "tags": ["demo"],
+    "metadata": {}
+  }
+]

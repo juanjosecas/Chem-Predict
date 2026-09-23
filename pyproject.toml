@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=77.0.3"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "chem-predict"
+version = "0.1.0"
+description = "Modular, auditable chemical prediction toolkit for degradation and impurity workflows"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+dependencies = [
+    "rdkit>=2025.9.4",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=9.0",
+]
+
+[project.scripts]
+chem-predict = "chem_predict.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest]
+minversion = "9.0"
+addopts = ["-ra", "--import-mode=importlib"]
+testpaths = ["tests"]
