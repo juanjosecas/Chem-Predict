@@ -1,17 +1,22 @@
 from __future__ import annotations
 
 import csv
+import gzip
 import io
+from pathlib import Path
+from collections.abc import Iterator
 from typing import Any
 from urllib.parse import urlencode
 
-from chem_predict.rulesources.http import fetch_json
+from chem_predict.rulesources.http import download_to_path, fetch_json
 from chem_predict.rulesources.models import ReactionRuleRecord, SourceFetchError
 
 
 BASE_URL = "https://retrorules.org"
 TEMPLATES_API = f"{BASE_URL}/api/templates"
 RETRO_RULES_VERSION = "3.1.0"
+RETRO_RULES_DATASETS = frozenset({"metanetx", "rhea", "uspto"})
+RETRO_RULES_FORMATS = frozenset({"json", "csv", "tsv"})
 
 
 def _first(row: dict[str, Any], *keys: str) -> Any:
@@ -108,8 +113,60 @@ def _payload_rows(payload: Any) -> list[dict[str, Any]]:
     )
 
 
+def iter_templates_tsv_gz(path: str | Path) -> Iterator[ReactionRuleRecord]:
+    """Stream a RetroRules gzip-compressed TSV archive."""
+
+    with gzip.open(path, "rt", encoding="utf-8", newline="") as handle:
+        reader = csv.DictReader(handle, delimiter="\t")
+        for row in reader:
+            yield parse_template_row(dict(row))
+
+
 class RetroRulesSource:
     """Primary-source adapter for the documented RetroRules template API."""
+
+    def bulk_download_url(
+        self,
+        dataset: str,
+        *,
+        format: str = "tsv",
+        version: str = RETRO_RULES_VERSION,
+    ) -> str:
+        dataset = dataset.lower()
+        format = format.lower()
+        if dataset not in RETRO_RULES_DATASETS:
+            raise ValueError(
+                f"dataset must be one of {sorted(RETRO_RULES_DATASETS)}"
+            )
+        if format not in RETRO_RULES_FORMATS:
+            raise ValueError(
+                f"format must be one of {sorted(RETRO_RULES_FORMATS)}"
+            )
+        return (
+            f"{BASE_URL}/dl/v{version}/{dataset}/templates"
+            f"?format={format}"
+        )
+
+    def download_templates(
+        self,
+        dataset: str,
+        path: str | Path,
+        *,
+        format: str = "tsv",
+        version: str = RETRO_RULES_VERSION,
+    ) -> Path:
+        """Download an official RetroRules compressed template archive."""
+
+        return download_to_path(
+            self.bulk_download_url(dataset, format=format, version=version),
+            path,
+        )
+
+    def iter_downloaded_tsv(
+        self,
+        path: str | Path,
+    ) -> Iterator[ReactionRuleRecord]:
+        yield from iter_templates_tsv_gz(path)
 
     def build_search_url(
         self,
