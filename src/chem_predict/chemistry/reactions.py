@@ -60,6 +60,17 @@ def apply_reaction(
         )
 
     reactants = tuple(mol_from_smiles(smiles) for smiles in reactant_smiles)
+    try:
+        outcomes, _raw_count = _run_reaction(reaction, reactants, max_products, sanitize_products)
+    except ProductSanitizationError as exc:
+        raise ProductSanitizationError(
+            f"Generated product failed RDKit sanitization for rule {reaction_smarts!r}"
+        ) from exc
+    return outcomes
+
+
+def _run_reaction(reaction, reactants, max_products: int, sanitize_products: bool = True):
+    """Execute a compiled rule and expose raw count before deduplication."""
     raw_outcomes = reaction.RunReactants(reactants, maxProducts=max_products)
 
     seen: set[tuple[str, ...]] = set()
@@ -73,7 +84,7 @@ def apply_reaction(
                     Chem.SanitizeMol(product)
                 except Exception as exc:
                     raise ProductSanitizationError(
-                        f"Generated product failed RDKit sanitization for rule {reaction_smarts!r}"
+                        "Generated product failed RDKit sanitization"
                     ) from exc
             product_smiles.append(
                 Chem.MolToSmiles(product, canonical=True, isomericSmiles=True)
@@ -84,4 +95,4 @@ def apply_reaction(
             seen.add(outcome)
             outcomes.append(outcome)
 
-    return outcomes
+    return outcomes, len(raw_outcomes)

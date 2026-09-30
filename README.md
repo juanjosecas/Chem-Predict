@@ -53,6 +53,27 @@ pytest
 
 ## Quick start
 
+### Mixtures, multi-step networks and process calculations
+
+`DegradationEngine.predict_mixture()` accepts named components or a list of
+SMILES and executes unary/multi-reactant rules over several rounds. Results
+retain co-reactants, co-products, provenance, conditions and resource limits;
+export with `to_dict()`, `to_rows()` or `to_graph_dict()`.
+
+New independent modules provide Morgan/Tanimoto structural coverage, an
+explicit-scale adapter for external reaction-yield models, nitrite-limited
+mass bounds, aqueous speciation and first-order Arrhenius exposure.
+
+```bash
+python examples/modular_workflows.py
+chem-predict mixture rules.json 'CCBr' '[OH-]' --depth 2 --output network.json
+chem-predict nitrosation 'CCNCC' --nitrite --ph 3.5
+```
+
+See [the workflow guide](docs/modular-workflows.md) for executable Python
+examples, scenario comparisons, model integration and the assessment of all
+six requested sources. No ML model or external service is required by the core.
+
 Normalize a structure:
 
 ```python

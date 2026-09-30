@@ -20,9 +20,15 @@ from chem_predict.nitrosamines.models import (
     ReactivityEvidence,
 )
 from chem_predict.nitrosamines.reactivity import list_reactivity_evidence
+from chem_predict.nitrosamines.process import (
+    NitriteBudget, NitrosationSpeciation, excipient_nitrite_mass,
+    nitrite_limited_bound, nitrosation_speciation,
+)
 from chem_predict.nitrosamines.sites import find_nitrosamine_sites, find_nitrosatable_centers
 
 __all__ = [
+    "NitriteBudget", "NitrosationSpeciation", "excipient_nitrite_mass",
+    "nitrite_limited_bound", "nitrosation_speciation",
     "AmineKind",
     "CATEGORY_AI_NG_PER_DAY",
     "CPCAAssessment",

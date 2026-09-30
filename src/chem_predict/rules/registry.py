@@ -88,6 +88,8 @@ def _rule_to_mapping(rule: Rule) -> dict[str, Any]:
             "temperature_max_c": rule.when.temperature_max_c,
             "requires_oxygen": rule.when.requires_oxygen,
             "requires_light": rule.when.requires_light,
+            "duration_min_h": rule.when.duration_min_h,
+            "duration_max_h": rule.when.duration_max_h,
         },
         "priority": rule.priority,
         "enabled": rule.enabled,

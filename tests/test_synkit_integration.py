@@ -29,3 +29,7 @@ def test_synkit_tuple_its_when_installed() -> None:
     assert (1.0, 0.0) in changes
     assert (0.0, 1.0) in changes
     assert result.synkit_version.startswith("1.6.")
+    report = result.changes_to_dict()
+    assert report["changed_bonds"]
+    import json
+    json.dumps(report)

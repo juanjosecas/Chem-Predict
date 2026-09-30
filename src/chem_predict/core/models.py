@@ -9,6 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any
+from math import isfinite
 
 
 class StressType(StrEnum):
@@ -40,6 +41,16 @@ class Conditions:
     duration_h: float | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
+    def __post_init__(self) -> None:
+        for name in ("ph", "temperature_c", "duration_h"):
+            value = getattr(self, name)
+            if value is not None and not isfinite(value):
+                raise ValueError(f"{name} must be finite")
+        if self.temperature_c is not None and self.temperature_c <= -273.15:
+            raise ValueError("temperature_c must be above absolute zero")
+        if self.duration_h is not None and self.duration_h < 0:
+            raise ValueError("duration_h must be non-negative")
+
 
 @dataclass(slots=True)
 class ConditionWindow:
@@ -52,6 +63,23 @@ class ConditionWindow:
     temperature_max_c: float | None = None
     requires_oxygen: bool | None = None
     requires_light: bool | None = None
+    duration_min_h: float | None = None
+    duration_max_h: float | None = None
+
+    def __post_init__(self) -> None:
+        for lower, upper in (("ph_min", "ph_max"),
+                             ("temperature_min_c", "temperature_max_c"),
+                             ("duration_min_h", "duration_max_h")):
+            lo, hi = getattr(self, lower), getattr(self, upper)
+            for name, value in ((lower, lo), (upper, hi)):
+                if value is not None and not isfinite(value):
+                    raise ValueError(f"{name} must be finite")
+                if value is not None and name.startswith("duration") and value < 0:
+                    raise ValueError(f"{name} must be non-negative")
+                if value is not None and name.startswith("temperature") and value <= -273.15:
+                    raise ValueError(f"{name} must be above absolute zero")
+            if lo is not None and hi is not None and lo > hi:
+                raise ValueError(f"{lower} must be <= {upper}")
 
     def matches(self, conditions: Conditions) -> bool:
         if self.stresses:
@@ -76,6 +104,12 @@ class ConditionWindow:
             return False
         if self.requires_light is not None and conditions.light is not self.requires_light:
             return False
+        if self.duration_min_h is not None:
+            if conditions.duration_h is None or conditions.duration_h < self.duration_min_h:
+                return False
+        if self.duration_max_h is not None:
+            if conditions.duration_h is None or conditions.duration_h > self.duration_max_h:
+                return False
 
         return True
 

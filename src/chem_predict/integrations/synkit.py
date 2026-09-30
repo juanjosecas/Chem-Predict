@@ -1,9 +1,12 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from importlib import import_module
 from importlib.metadata import PackageNotFoundError, version
 from typing import Any
+
+from chem_predict.applicability import split_reaction_smiles
+from chem_predict.chemistry import mol_from_smiles
 
 
 SUPPORTED_SYNKIT_MIN = "1.6.2"
@@ -26,6 +29,11 @@ class SynKitITSResult:
     graph: Any
     changed_bonds: tuple[BondChange, ...]
     synkit_version: str
+
+    def changes_to_dict(self) -> dict[str, Any]:
+        """JSON-compatible change report without serializing graph internals."""
+        return {"synkit_version": self.synkit_version,
+                "changed_bonds": [asdict(change) for change in self.changed_bonds]}
 
 
 def _load_synkit_io() -> Any:
@@ -54,6 +62,11 @@ def reaction_to_its(
     """Convert atom-mapped reaction SMILES using SynKit 1.6.x tuple ITS API."""
 
     io = _load_synkit_io()
+    sides = split_reaction_smiles(reaction_smiles)
+    for side in (sides[0], sides[2]):
+        maps = [atom.GetAtomMapNum() for atom in mol_from_smiles(side).GetAtoms()]
+        if any(number <= 0 for number in maps) or len(set(maps)) != len(maps):
+            raise ValueError("SynKit requires fully mapped atoms with unique positive maps on each side")
     graph = io.rsmi_to_its(
         reaction_smiles,
         core=core,
