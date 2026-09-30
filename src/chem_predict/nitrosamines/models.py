@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any
+from math import isfinite
 
 
 class AmineKind(StrEnum):
@@ -74,6 +75,19 @@ class NitrosationContext:
     storage: bool | None = None
     excipient_nitrite_ppm: float | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        for name in ("ph", "temperature_c", "excipient_nitrite_ppm"):
+            value = getattr(self, name)
+            if value is not None and not isfinite(value):
+                raise ValueError(f"{name} must be finite")
+        if self.temperature_c is not None and self.temperature_c <= -273.15:
+            raise ValueError("temperature_c must be above absolute zero")
+        if self.excipient_nitrite_ppm is not None:
+            if self.excipient_nitrite_ppm < 0:
+                raise ValueError("excipient_nitrite_ppm must be non-negative")
+            if self.excipient_nitrite_ppm > 0 and self.nitrite_present is False:
+                raise ValueError("Positive nitrite ppm contradicts nitrite_present=False")
 
 
 @dataclass(frozen=True, slots=True)

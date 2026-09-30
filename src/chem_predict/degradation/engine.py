@@ -6,8 +6,13 @@ valid. Rule curation and scoring remain separate concerns.
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
+from typing import Any
+
 from chem_predict.chemistry import apply_reaction, canonicalize_smiles
 from chem_predict.core import Conditions, Prediction
+from chem_predict.chemistry.reactions import reaction_from_smarts
+from chem_predict.degradation.network import ReactionNetwork, enumerate_network
 from chem_predict.rules import RuleRegistry
 
 
@@ -33,6 +38,8 @@ class DegradationEngine:
         matching_rules.sort(key=lambda rule: (-rule.priority, rule.id))
 
         for rule in matching_rules:
+            if reaction_from_smarts(rule.reaction_smarts).GetNumReactantTemplates() != 1:
+                continue  # Multi-reactant rules require predict_mixture().
             outcomes = apply_reaction(
                 rule.reaction_smarts,
                 [parent],
@@ -52,3 +59,8 @@ class DegradationEngine:
                 )
 
         return predictions
+
+    def predict_mixture(self, components: Mapping[str, str] | Sequence[str],
+                        conditions: Conditions, **options: Any) -> ReactionNetwork:
+        """Return a bounded ReactionNetwork; accepts named components or SMILES."""
+        return enumerate_network(self.registry, components, conditions, **options)
