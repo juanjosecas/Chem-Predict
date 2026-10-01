@@ -108,3 +108,9 @@ This boundary is intentionally narrow. Future uses can add adapters for:
 
 Chem-Predict should not expose SynKit internals throughout the rest of the
 package. If SynKit changes API, only this adapter should require modification.
+
+## Input validation and exports
+
+`reaction_to_its` requires a positive atom-map number on every atom and unique maps within each reaction side. Invalid or unmapped input raises `ValueError`; this adapter does not perform atom mapping. Use `result.changes_to_dict()` to export bond changes without exposing graph objects.
+
+The [complete notebook](notebook.md) demonstrates a mapped reaction and skips SynKit gracefully when it is not installed. For external yield models and the boundaries of reaction-network integrations, see [modular workflows](modular-workflows.md).

@@ -95,3 +95,7 @@ SynKit remains the richer optional backend for ITS graphs, graph rewriting,
 mechanistic representations and more complex reaction-graph analysis. The
 visualization API should remain independent of a specific graph backend so that
 future SynKit views can be added without changing the user-facing functions.
+
+## Reaction networks and atom mapping
+
+The [complete notebook](notebook.md) includes molecule grids, reaction drawings and a bipartite network plot. Network products are canonical structures without automatic atom mapping. To highlight a reaction centre, supply an independently mapped reaction; do not reuse an unmapped network equation as if it had known atom correspondence.
