@@ -1,258 +1,112 @@
 # Chem-Predict
 
-Chem-Predict is a modular Python toolkit for building auditable chemical prediction workflows around reaction rules, degradation pathways, impurity fate, physicochemical properties, purge models, and nitrosamine risk.
+Herramientas modulares en Python para explorar reacciones, degradación e impurezas a partir de estructuras y reglas explícitas. Cada producto candidato conserva la regla y los reactivos que lo originaron.
 
-The repository starts deliberately small: the first layer is a stable chemical/reaction core plus registries and interfaces that can be extended without rewriting the package.
+**Empezar con el [notebook completo de reacciones](notebooks/ChemPredict_reacciones_completo.ipynb)**: incluye estructuras, mezclas, cuatro escenarios, red multietapa, controles, gráficos y exportación. La [guía del notebook](docs/notebook.md) explica cómo ejecutarlo y adaptar los ejemplos.
 
-> **Status:** early research scaffold. Outputs are not validated for regulatory or safety-critical decisions.
+## Capacidades actuales
 
-## Design principles
+| Necesidad | Funcionalidad | Alcance |
+| --- | --- | --- |
+| Normalizar estructuras | SMILES canónico con RDKit | No estandariza automáticamente sales ni estados de protonación |
+| Enumerar productos | SMARTS y reglas JSON, uno o varios reactivos | Depende de las reglas suministradas |
+| Explorar mezclas | Red multietapa y comparación de escenarios | Límites de profundidad, especies, pasos y combinaciones |
+| Filtrar condiciones | Estrés, pH, temperatura, duración, oxígeno y luz | Ventanas de aplicabilidad de reglas |
+| Revisar cobertura | Vecinos por similitud molecular o de reacción | Referencias y umbral definidos por el usuario |
+| Explorar nitrosación | Precursores, productos directos, especiación y cota por nitrito | Cálculos separados de formación y evaluación de potencia |
+| Calcular exposición térmica | Primer orden y Arrhenius por etapas | Requiere parámetros cinéticos aportados por el usuario |
+| Estimar rendimientos | Adaptador de modelos externos | No incluye pesos entrenados ni un predictor por defecto |
+| Inspeccionar reacciones | Dibujos, centro de reacción e ITS opcional de SynKit | El centro y el ITS necesitan mapeo atómico |
+| Revisar alertas medchem | Port parcial RDKit de Lilly y adaptador oficial | El port no cubre todas las reglas originales |
 
-- **Chemistry engine and chemical knowledge are separate.** Reaction/degradation rules are data objects, not hard-coded branches.
-- **Provenance first.** Every rule can carry a source, description, tags, priority, and arbitrary metadata.
-- **Fail loudly while curating.** Invalid SMILES, reaction arity errors, and invalid generated products raise explicit exceptions by default.
-- **No hidden probability claims.** Rule priority is an ordering field, not a probability of degradation.
-- **Dependency discipline.** External APIs are added only after checking their current official documentation.
-- **Modular growth.** `degradation`, `properties`, `purge`, and `nitrosamines` can evolve independently over the shared core.
+Los resultados del motor son **estructuras candidatas**. La prioridad de una regla, la cantidad de rutas y la similitud no representan probabilidades, concentraciones ni rendimientos. Las reglas de demostración no constituyen una biblioteca experimental validada.
 
-## Current architecture
+## Instalación
 
-```text
-src/chem_predict/
-├── core/          # shared domain models
-├── chemistry/     # molecule and reaction primitives
-├── rules/         # rule registry + JSON serialization
-├── degradation/   # degradation prediction engine
-├── medchem/        # Lilly-style quality/reactivity filters
-├── rulesources/    # primary-source reaction rules/reaction evidence
-├── visualization/  # molecules, reactions, reaction-center depictions
-├── properties/    # future property providers
-├── purge/         # future impurity purge models
-├── nitrosamines/  # CPCA, precursor/context screening, reactivity evidence
-└── cli.py          # small command-line interface
-```
-
-## Requirements
-
-- Python >= 3.11
-- RDKit >= 2025.09.4
-
-The initial RDKit integration was checked against the official RDKit 2026.03.6 documentation.
-
-## Installation for development
+Python **3.11 o superior**. Ejecutar desde una terminal:
 
 ```bash
 git clone https://github.com/juanjosecas/Chem-Predict.git
 cd Chem-Predict
 python -m venv .venv
+# Linux/macOS
 source .venv/bin/activate
-python -m pip install -U pip
-python -m pip install -e ".[dev]"
+# Windows PowerShell: .venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -e ".[notebook]"
+```
+
+Para usar solamente la biblioteca y la CLI: `python -m pip install -e .`.
+Para contribuir: `python -m pip install -e ".[dev,notebook]"`.
+SynKit se instala por separado: `python -m pip install -e ".[synkit]"`.
+
+## Primer cálculo
+
+Este ejemplo usa las reglas demostrativas incluidas y proporciona el agua como correaccionante:
+
+```bash
+chem-predict mixture examples/rules_mixture_demo.json "CCOC(C)=O" "O" \
+  --stress acid --ph 3 --temperature-c 25 --duration-h 24 --depth 2 \
+  --output red_reacciones.json
+```
+
+Genera ácido acético y etanol como candidatos de hidrólisis. El JSON conserva reactivos, productos, reglas, condiciones, límites y advertencias. Revisar `truncated` y `warnings` antes de interpretar una red.
+
+```python
+from chem_predict import Conditions, DegradationEngine, RuleRegistry, StressType
+
+engine = DegradationEngine(RuleRegistry.from_json("examples/rules_mixture_demo.json"))
+network = engine.predict_mixture(
+    {"acetato_de_etilo": "CCOC(C)=O", "agua": "O"},
+    Conditions(stresses=frozenset({StressType.ACID}), ph=3,
+               temperature_c=25, duration_h=24),
+    max_depth=2,
+)
+for row in network.to_rows():
+    print(row["rule_id"], row["reactants"], "->", row["products"])
+```
+
+El pH no asigna automáticamente la etiqueta `acid`. Oxígeno y luz filtran reglas; no añaden especies a la mezcla. Ver [condiciones y reglas](docs/rules-format.md).
+
+## Notebook y ejemplos
+
+```bash
+python -m jupyterlab notebooks/ChemPredict_reacciones_completo.ipynb
+```
+
+Seleccionar el kernel del entorno instalado y ejecutar las celdas en orden. Mantener `INSTALL_DEPENDENCIES = False` para usar el checkout local. El notebook también permite instalar una versión fijada desde un entorno nuevo; ver [guía](docs/notebook.md).
+
+El ejemplo breve `python examples/modular_workflows.py` funciona sin notebook, GPU ni modelos descargados.
+
+## Documentación
+
+| Guía | Contenido |
+| --- | --- |
+| [Índice](docs/README.md) | Rutas para empezar, ampliar reglas y contribuir |
+| [Notebook completo](docs/notebook.md) | Ejecución, entradas editables, resultados y controles |
+| [CLI](docs/cli.md) | Comandos, opciones y ejemplos reproducibles |
+| [Flujos modulares](docs/modular-workflows.md) | Mezclas, escenarios, cobertura, cinética, nitrosación y rendimientos |
+| [Formato de reglas](docs/rules-format.md) | Esquema JSON y semántica de condiciones |
+| [Fuentes de reglas](docs/rule-sources.md) | Procedencia y curación |
+| [Nitrosaminas](docs/nitrosamines.md) | Evaluación estructural y límites del cálculo |
+| [Visualización](docs/visualization.md) | Moléculas, reacciones y centro de reacción |
+| [Integraciones](docs/integrations.md) | Lilly y SynKit |
+| [Arquitectura](docs/architecture.md) | Módulos y límites entre capas |
+| [Dependencias](docs/dependency-policy.md) | Política de dependencias |
+
+## Desarrollo y validación
+
+```bash
+python -m pip install -e ".[dev,notebook]"
 pytest
-```
-
-## Quick start
-
-### Mixtures, multi-step networks and process calculations
-
-`DegradationEngine.predict_mixture()` accepts named components or a list of
-SMILES and executes unary/multi-reactant rules over several rounds. Results
-retain co-reactants, co-products, provenance, conditions and resource limits;
-export with `to_dict()`, `to_rows()` or `to_graph_dict()`.
-
-New independent modules provide Morgan/Tanimoto structural coverage, an
-explicit-scale adapter for external reaction-yield models, nitrite-limited
-mass bounds, aqueous speciation and first-order Arrhenius exposure.
-
-```bash
 python examples/modular_workflows.py
-chem-predict mixture rules.json 'CCBr' '[OH-]' --depth 2 --output network.json
-chem-predict nitrosation 'CCNCC' --nitrite --ph 3.5
+python scripts/validate_notebook.py
 ```
 
-See [the workflow guide](docs/modular-workflows.md) for executable Python
-examples, scenario comparisons, model integration and the assessment of all
-six requested sources. No ML model or external service is required by the core.
+GitHub Actions ejecuta los tests en Python 3.11 y 3.13, comprueba la integración opcional de SynKit y ejecuta el notebook en un directorio temporal. Los tests verifican comportamiento del software; la validación química requiere referencias experimentales y reglas curadas para cada uso.
 
-Normalize a structure:
+## Próximas ampliaciones
 
-```python
-from chem_predict.chemistry import canonicalize_smiles
+Ampliar bibliotecas curadas, validar contra datos experimentales, calibrar modelos de rendimiento y conectar nuevos motores mediante adaptadores. `properties/` y `purge/` son puntos de extensión; no ofrecen todavía modelos completos de propiedades o purga.
 
-print(canonicalize_smiles("C1=CC=CN=C1"))
-# c1ccncc1
-```
-
-Apply a reaction SMARTS:
-
-```python
-from chem_predict.chemistry import apply_reaction
-
-outcomes = apply_reaction(
-    "[C:1]=[O:2]>>[C:1][O:2]",
-    ["CC=O"],
-)
-print(outcomes)
-# [('CCO',)]
-```
-
-Create a rule and run the degradation engine:
-
-```python
-from chem_predict.core import ConditionWindow, Conditions, Rule, StressType
-from chem_predict.degradation import DegradationEngine
-from chem_predict.rules import RuleRegistry
-
-rule = Rule(
-    id="demo_carbonyl_reduction",
-    name="Demo carbonyl reduction",
-    reaction_smarts="[C:1]=[O:2]>>[C:1][O:2]",
-    when=ConditionWindow(stresses=frozenset({StressType.REDUCTION})),
-    source="Demonstration only; not a curated degradation rule",
-)
-
-registry = RuleRegistry([rule])
-engine = DegradationEngine(registry)
-
-predictions = engine.predict(
-    "CC=O",
-    Conditions(stresses=frozenset({StressType.REDUCTION})),
-)
-
-for prediction in predictions:
-    print(prediction.rule_id, prediction.products)
-```
-
-The example transformation exists only to test the machinery. Scientific degradation rules should be separately curated and referenced.
-
-## Nitrosamine screening
-
-The nitrosamine module keeps potency categorization, formation context, and
-reactivity/purge evidence separate:
-
-```python
-from chem_predict.nitrosamines import (
-    NitrosationContext,
-    assess_cpca,
-    assess_nitrosation_context,
-    enumerate_secondary_amine_nitrosation_products,
-)
-
-cpca = assess_cpca("CCN(N=O)CC")
-print(cpca.overall_category, cpca.overall_ai_ng_per_day)
-
-context = assess_nitrosation_context(
-    "CCNCC",
-    NitrosationContext(nitrite_present=True, ph=3.5),
-)
-print(context.flags)
-
-print(enumerate_secondary_amine_nitrosation_products("CCNCC"))
-```
-
-See `docs/nitrosamines.md` for scope, regulatory-source hierarchy, current
-limitations, and literature provenance.
-
-## Medchem and reaction informatics
-
-```python
-from chem_predict.medchem import LillyNativeRules
-
-assessment = LillyNativeRules().assess("CCN(N=O)CC")
-print(assessment.passed, assessment.total_demerits)
-```
-
-The native Lilly port is incremental and auditable; the package also provides
-an adapter to a local official Lilly-Medchem-Rules/LillyMol installation for
-exact comparison.
-
-SynKit is optional:
-
-```bash
-python -m pip install -e ".[synkit]"
-```
-
-```python
-from chem_predict.integrations import reaction_to_its
-
-result = reaction_to_its(
-    "[CH3:1][Br:2].[OH-:3]>>[CH3:1][OH:3].[Br-:2]"
-)
-print(result.changed_bonds)
-```
-
-See `docs/integrations.md` and `THIRD_PARTY_NOTICES.md`.
-
-## Primary reaction-rule sources
-
-Direct reaction rules and primary reaction evidence are deliberately kept
-separate.
-
-```python
-from chem_predict.rulesources import RetroRulesSource, to_rule_registry
-
-source = RetroRulesSource()
-records = source.search(ec="1.2.1", radius=4)
-
-registry = to_rule_registry(records, tags=("retrorules",))
-```
-
-Rhea reactions can be downloaded directly from the official ExPASy export:
-
-```python
-from chem_predict.rulesources import RheaSource
-
-source = RheaSource()
-source.download("data/raw/rhea-reaction-smiles.tsv")
-```
-
-CheT official CSV exports, NORMAN/Zenodo records and explicitly supplied
-enviPath rule URLs also have adapters. ORD and BioTransformer are registered as
-external sources with their licensing constraints rather than being copied into
-the MIT repository.
-
-See `docs/rule-sources.md`.
-
-## Visualization
-
-```python
-from chem_predict.visualization import (
-    draw_reaction_center,
-    molecule_svg,
-    reaction_svg,
-)
-
-mol_svg = molecule_svg("CCO", atom_indices=True)
-
-reaction = "[CH3:1][Br:2].[OH-:3]>>[CH3:1][OH:3].[Br-:2]"
-rxn_svg = reaction_svg(reaction)
-
-center = draw_reaction_center(reaction)
-print(center.changed_bonds)
-```
-
-The reaction-center view highlights changed mapped atoms/bonds independently on
-the reactant and product sides. See `docs/visualization.md`.
-
-## CLI
-
-```bash
-chem-predict normalize "C1=CC=CN=C1"
-chem-predict apply "[C:1]=[O:2]>>[C:1][O:2]" "CC=O"
-chem-predict predict examples/rules_demo.json "CC=O" --stress reduction
-```
-
-## Near-term roadmap
-
-1. Curated, versioned degradation-rule library with citations and applicability constraints.
-2. Multi-reactant handling for API-excipient and nitrosation chemistry.
-3. Pluggable physicochemical-property providers.
-4. Explicit impurity fate/purge model separating reactivity, solubility, volatility, and process operations.
-5. Expand nitrosamine formation/persistence models and validate the open CPCA feature catalogue.
-6. Expand primary-source adapters and derive validated reaction templates from Rhea, CheT, NORMAN and ORD reaction evidence.
-7. Scoring/ranking layer kept separate from rule execution.
-8. Provenance and validation reports suitable for reproducible research.
-
-## License
-
-MIT. See `LICENSE`.
+Licencia: [MIT](LICENSE).

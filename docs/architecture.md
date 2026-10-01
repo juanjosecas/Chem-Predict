@@ -1,30 +1,35 @@
-# Architecture
+# Arquitectura
 
-Chem-Predict separates execution infrastructure from scientific knowledge.
+[Inicio](README.md) · [Flujos y ejemplos API](modular-workflows.md)
 
-## Layers
+Chem-Predict mantiene el núcleo basado en RDKit y conecta herramientas mayores mediante adaptadores opcionales.
 
-1. **Core models** contain serializable domain objects (`Rule`, `Conditions`, `Prediction`). They do not depend on RDKit.
-2. **Chemistry primitives** are the narrow RDKit boundary: parsing, canonicalization, sanitization, and reaction execution.
-3. **Rule registry** stores and serializes scientific transformation rules without embedding them in Python control flow.
-4. **Domain engines** consume the shared core. The first is `DegradationEngine`; later modules can implement purge or nitrosamine-specific workflows without changing the chemistry layer.
-5. **Scoring/property layers** should remain optional. A rule engine must still work without a trained model or external service.
+| Módulo | Responsabilidad |
+| --- | --- |
+| `core` | Condiciones, ventanas de aplicación, tipos de estrés y reglas |
+| `chemistry` | Lectura/canonicalización, aplicación SMARTS y visualización |
+| `rules` | Registro JSON y procedencia de reglas |
+| `degradation` | Predicción individual, redes de mezcla, escenarios y cinética térmica |
+| `applicability` | Similitud con un conjunto de referencia local |
+| `nitrosamines` | Evaluación estructural, contexto, productos, especiación y cotas |
+| `yields` | Interfaz para modelos externos de rendimiento |
+| `medchem` | Port parcial de Lilly y backend oficial |
+| `integrations` | Adaptador opcional SynKit para ITS y cambios de enlaces |
+| `properties`, `purge` | Puntos de extensión pendientes |
+| `cli` | Entrada de terminal y serialización de resultados |
 
-## Extension rule
+## Flujo de cálculo
 
-A new scientific capability should normally be added as one of:
+Las entradas se canonicalizan, el registro filtra reglas por condiciones y el motor aplica SMARTS con RDKit. `predict` considera una molécula y reglas de un reactivo; `predict_mixture` combina especies disponibles según los slots de cada regla y añade productos para las siguientes rondas.
 
-- a new rule/data file;
-- a new adapter/provider inside a domain namespace;
-- a new engine consuming the existing models;
-- a new model field only when the concept is genuinely shared across domains.
+La red registra entradas, profundidad mínima por especie, pasos con regla/reactivos/productos, condiciones, límites, advertencias y truncamiento. `to_dict()` exporta JSON, `to_rows()` ofrece filas de pasos y `to_graph_dict()` representa el grafo bipartito de especies y reacciones. Los slots de coproductos se conservan incluso si dos tienen el mismo SMILES.
 
-Avoid adding domain-specific switches to `chemistry/` or giant conditional blocks to `DegradationEngine`.
+No hay consumo de especies, concentraciones, generación automática de correaccionantes ni balance cinético de la mezcla. Los ciclos pueden conservarse como pasos sin provocar una enumeración infinita. La profundidad y los topes controlan la expansión combinatoria.
 
-## Provenance
+## Límites entre módulos
 
-`Rule.source`, `Rule.description`, `Rule.tags`, and `Rule.metadata` are deliberately generic. A future curation schema can add DOI, patent, dataset record, curator, version, and evidence level without changing RDKit execution.
+Las condiciones restringen reglas; el cálculo térmico es una utilidad independiente que exige parámetros cinéticos. La cobertura estructural tampoco modifica automáticamente los productos. Un modelo de rendimiento debe suministrarse de forma explícita: el adaptador no entrena ni descarga pesos por defecto.
 
-## Scoring
+SynKit se importa en la frontera de integración, requiere mapeo positivo y único en cada lado y no modifica el motor SMARTS. La visualización de centros también exige mapas; la red no los genera automáticamente.
 
-`Rule.priority` is deterministic ordering metadata, not a probability. Probabilistic or ML ranking should be implemented as a separate scorer so the raw generated pathway remains reproducible and auditable.
+Al agregar una función, conservar la procedencia de resultados, validar entradas en la frontera y mantener las dependencias grandes fuera del núcleo. Consultar la [política de dependencias](dependency-policy.md).

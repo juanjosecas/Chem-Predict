@@ -1,0 +1,121 @@
+[
+  {
+    "id": "demo_ester_hydrolysis",
+    "name": "Hidrólisis de éster (demo)",
+    "reaction_smarts": "[C:1](=[O:2])[O:3][#6:4].[OH2:5]>>[C:1](=[O:2])[OH:5].[OH:3][#6:4]",
+    "when": {
+      "stresses": [
+        "acid"
+      ],
+      "ph_min": null,
+      "ph_max": 5,
+      "temperature_min_c": null,
+      "temperature_max_c": null,
+      "requires_oxygen": null,
+      "requires_light": null,
+      "duration_min_h": null,
+      "duration_max_h": null
+    },
+    "priority": 30,
+    "enabled": true,
+    "source": "SMARTS demostrativa escrita para este notebook",
+    "description": null,
+    "tags": [
+      "demo",
+      "ester",
+      "hydrolysis"
+    ],
+    "metadata": {
+      "validated_experimentally": false
+    }
+  },
+  {
+    "id": "demo_amide_hydrolysis",
+    "name": "Hidrólisis de amida (demo)",
+    "reaction_smarts": "[C:1](=[O:2])[N;H1;+0:3][#6:4].[OH2:5]>>[C:1](=[O:2])[OH:5].[NH2:3][#6:4]",
+    "when": {
+      "stresses": [
+        "acid"
+      ],
+      "ph_min": null,
+      "ph_max": 2,
+      "temperature_min_c": 80,
+      "temperature_max_c": null,
+      "requires_oxygen": null,
+      "requires_light": null,
+      "duration_min_h": 12,
+      "duration_max_h": null
+    },
+    "priority": 20,
+    "enabled": true,
+    "source": "SMARTS demostrativa escrita para este notebook",
+    "description": null,
+    "tags": [
+      "amide",
+      "demo",
+      "hydrolysis"
+    ],
+    "metadata": {
+      "validated_experimentally": false
+    }
+  },
+  {
+    "id": "demo_alcohol_oxidation",
+    "name": "Oxidación de alcohol primario (demo)",
+    "reaction_smarts": "[CH2:1][OH:2].[OH:3][OH:4]>>[CH:1]=[O:2].[OH2:3].[OH2:4]",
+    "when": {
+      "stresses": [
+        "oxidation"
+      ],
+      "ph_min": null,
+      "ph_max": null,
+      "temperature_min_c": null,
+      "temperature_max_c": null,
+      "requires_oxygen": null,
+      "requires_light": null,
+      "duration_min_h": null,
+      "duration_max_h": null
+    },
+    "priority": 10,
+    "enabled": true,
+    "source": "SMARTS demostrativa escrita para este notebook",
+    "description": null,
+    "tags": [
+      "demo",
+      "oxidation"
+    ],
+    "metadata": {
+      "validated_experimentally": false
+    }
+  },
+  {
+    "id": "demo_secondary_nitrosation",
+    "name": "Nitrosación secundaria (demo)",
+    "reaction_smarts": "[N;H1;X3;+0;!$(N-[#6]=[!#6]):1]([#6:2])[#6:3].[OH:4][N:5]=[O:6]>>[N:1]([#6:2])([#6:3])[N:5]=[O:6].[OH2:4]",
+    "when": {
+      "stresses": [
+        "nitrosation"
+      ],
+      "ph_min": null,
+      "ph_max": 5,
+      "temperature_min_c": null,
+      "temperature_max_c": null,
+      "requires_oxygen": null,
+      "requires_light": null,
+      "duration_min_h": null,
+      "duration_max_h": null
+    },
+    "priority": 5,
+    "enabled": true,
+    "source": "SMARTS demostrativa escrita para este notebook",
+    "description": null,
+    "tags": [
+      "demo",
+      "nitrosation"
+    ],
+    "metadata": {
+      "validated_experimentally": false,
+      "scope": "neutral secondary non-amide amine example; not a universal nitrosation rule"
+    }
+  }
+]
